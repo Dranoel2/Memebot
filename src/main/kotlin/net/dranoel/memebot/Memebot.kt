@@ -30,7 +30,7 @@ object Memebot : ListenerAdapter() {
                 val id = event.getOption("id")?.asString as String
                 val text1 = event.getOption("text1")?.asString
                 val text2 = event.getOption("text2")?.asString
-                val url = genUrl(id, text1, text2)
+                val url = genUrl(id, text1, text2, "png")
                 runBlocking {
                     launch {
                         if(InfoGetter.getIds().contains(id)) {
@@ -87,7 +87,8 @@ object Memebot : ListenerAdapter() {
                 val imageUrl = event.getOption("url")?.asString as String
                 val toptext = event.getOption("toptext")?.asString
                 val bottomtext = event.getOption("bottomtext")?.asString
-                val url = (genUrl("custom", toptext, bottomtext) + "?background=$imageUrl")
+                val suffix = imageUrl.split(".").last()
+                val url = (genUrl("custom", toptext, bottomtext, suffix) + "?background=$imageUrl")
                 runBlocking {
                     launch {
                         if(InfoGetter.verifyUrl(imageUrl)) {
@@ -121,17 +122,25 @@ object Memebot : ListenerAdapter() {
             .addOption(OptionType.STRING, "bottomtext", "The text at the bottom of the meme", false),
     )
 
-    private fun genUrl(id: String, text1: String?, text2: String?): String {
-        val finalText1 = escapeURL(text1 ?: " ")
-        val finalText2 = escapeURL(text2 ?: " ")
-        return "https://api.memegen.link/images/$id/$finalText1/$finalText2.png"
+    private fun genUrl(id: String, text1: String?, text2: String?, suffix: String): String {
+        val finalText1: String = if(text1 != null) {
+            "/" + escapeURL(text1)
+        } else {
+            ""
+        }
+        val finalText2: String = if(text2 != null) {
+            "/" + escapeURL(text2)
+        } else {
+            ""
+        }
+        return "https://api.memegen.link/images/$id$finalText1$finalText2.$suffix"
     }
 
     private fun escapeURL(url: String): String {
         return url
             .replace("-", "--")
-            .replace(" ", "-")
             .replace("_", "__")
+            .replace(" ", "_")
             .replace("?", "~q")
             .replace("&", "~a")
             .replace("%", "~p")

@@ -2,10 +2,12 @@ package net.dranoel.memebot
 
 import io.ktor.client.*
 import io.ktor.client.engine.apache.*
+import io.ktor.client.features.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import java.net.ConnectException
 
 object InfoGetter {
     private val client = HttpClient(Apache) {
@@ -35,9 +37,15 @@ object InfoGetter {
     }
 
     suspend fun verifyUrl(url: String): Boolean {
-        val response: HttpResponse = client.request("https://ktor.io/") {
-            // Configure request parameters exposed by HttpRequestBuilder
+        return try {
+            val response: HttpResponse = client.request(url) {
+                accept(ContentType.Image.Any)
+                expectSuccess = false
+            }
+            println(response)
+            response.status.value == 200
+        } catch (e: ConnectException) {
+            false
         }
-        return response.status.value == 200
     }
 }
